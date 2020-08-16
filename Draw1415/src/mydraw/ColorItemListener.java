@@ -1,53 +1,27 @@
 package mydraw;
 
-import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * Managing colors selected by the user
- * @author Michael
- *
- */
-
-public class ColorItemListener implements ItemListener
+class ColorItemListener implements ItemListener
 {
+    private DrawGUI _colorItemGUI;
 
-    DrawGUI gui;
-
-    public ColorItemListener(DrawGUI itsGUI)
+    /**
+     * Constructor
+     * @param itsGUI GUI reference
+     */
+    ColorItemListener(DrawGUI itsGUI)
     {
-        gui = itsGUI;
+        _colorItemGUI = itsGUI;
     }
 
-    // user selected new color => store new color in DrawGUIs
+    /**
+     * If user selected new color then store new color in DrawGUI
+     */
     public void itemStateChanged(ItemEvent e)
     {
-        if (e.getItem()
-            .equals("Black"))
-        {
-            gui.color = Color.black;
-        }
-        else if (e.getItem()
-            .equals("White"))
-        {
-            gui.color = Color.white;
-        }
-        else if (e.getItem()
-            .equals("Green"))
-        {
-            gui.color = Color.green;
-        }
-        else if (e.getItem()
-            .equals("Red"))
-        {
-            gui.color = Color.red;
-        }
-        else if (e.getItem()
-            .equals("Blue"))
-        {
-            gui.color = Color.blue;
-        }
-
+        _colorItemGUI.color = _colorItemGUI.model.stringColor.get(e.getItem());
     }
+
 }

@@ -2,82 +2,74 @@ package mydraw;
 
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
-/** 
+/**
  * If this class is active, rectangles are drawn
  */
-
 class RectangleDrawer extends ShapeDrawer
 {
-    DrawGUI gui;
+    private int _pressX, _pressY;
+    private DrawGUI _rdGUI;
+    public BufferedImage _initialBuffer;
 
-    public RectangleDrawer(DrawGUI gui2)
+    /**
+     * Constructor
+     * @param itsGUI
+     */
+    RectangleDrawer(DrawGUI itsGUI)
     {
-        gui = gui2;
+        _rdGUI = itsGUI;
     }
-
-    int pressx, pressy;
-    int lastx = -1, lasty = -1;
 
     // mouse pressed => fix first corner of rectangle
     public void mousePressed(MouseEvent e)
     {
-        pressx = e.getX();
-        pressy = e.getY();
+        _pressX = e.getX();
+        _pressY = e.getY();
+        _initialBuffer = _rdGUI.model.getBufferedImage();
     }
 
     // mouse released => fix second corner of rectangle
     // and draw the resulting shape
     public void mouseReleased(MouseEvent e)
     {
-        Graphics g = gui.buffer.getGraphics();
-        if (lastx != -1)
-        {
-            // first undraw a rubber rect
-            g.setColor(gui.colorBackground);
-            g.setXORMode(gui.color);
-            doDraw(pressx, pressy, lastx, lasty, g);
-            lastx = -1;
-            lasty = -1;
-        }
-        // these commands finish the rubberband mode
+        Graphics g = _rdGUI.model.getBufferGraphics();
+        g.setColor(_rdGUI.color);
         g.setPaintMode();
-        g.setColor(gui.color);
-        // draw the finel rectangle
-        doDraw(pressx, pressy, e.getX(), e.getY(), g);
-        gui.draw();
+        saveCommand(_pressX, _pressY, e.getX(), e.getY(), g);
+
+        _rdGUI.bufferToDrawingArea();
     }
 
-    // mouse released => temporarily set second corner of rectangle
-    // draw the resulting shape in "rubber-band mode"
     public void mouseDragged(MouseEvent e)
     {
-        Graphics g = gui.drawingArea.getGraphics();
-        // these commands set the rubberband mode
-        //        g.setXORMode(gui.color);
-        //        g.setColor(gui.drawingArea.getBackground());
-        g.setXORMode(gui.color);
-        g.setColor(gui.colorBackground);
-        if (lastx != -1)
-        {
-            // first undraw previous rubber rect
-            doDraw(pressx, pressy, lastx, lasty, g);
+        BufferedImage copy = new BufferedImage(_initialBuffer.getWidth(),
+                _initialBuffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics g = copy.getGraphics();
+        g.drawImage(_initialBuffer, 0, 0, null);
+        g.setColor(_rdGUI.color);
+        g.setPaintMode();
+        doDraw(_pressX, _pressY, e.getX(), e.getY(), g);
+        _rdGUI.specBufferToDrawingArea(copy);
 
-        }
-        lastx = e.getX();
-        lasty = e.getY();
-        // draw new rubber rect
-        doDraw(pressx, pressy, lastx, lasty, g);
     }
 
     public void doDraw(int x0, int y0, int x1, int y1, Graphics g)
     {
         // calculate upperleft and width/height of rectangle
-        int x = Math.min(x0, x1);
-        int y = Math.min(y0, y1);
-        int w = Math.abs(x1 - x0);
-        int h = Math.abs(y1 - y0);
-        // draw rectangle
-        g.drawRect(x, y, w, h);
+        _rdGUI.model.doDraw(x0, y0, x1, y1, g);
+    }
+
+    public void saveCommand(int x0, int y0, int x1, int y1, Graphics g)
+    {
+        @SuppressWarnings("unused")
+        Drawable cmd = new CommandRectangle(_rdGUI, _rdGUI.color, _rdGUI.model,
+                x0, y0, x1, y1);
+    }
+
+    public DrawGUI getRDGUI()
+    {
+        return _rdGUI;
     }
 }

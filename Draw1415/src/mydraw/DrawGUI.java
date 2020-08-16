@@ -1,371 +1,352 @@
 package mydraw;
 
 import java.awt.BorderLayout;
-import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.awt.image.ImageProducer;
-import java.awt.image.RGBImageFilter;
-import java.io.IOException;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
-
-/**
- * 
- * This class implements the GUI for our application
- * 
- */
 
 @SuppressWarnings("serial")
-public class DrawGUI extends JFrame
+class DrawGUI extends JFrame
 {
-    private Draw app; // A reference to the application, to send commands to.
-    private DrawGUI gui = this;
     public Color color;
+    public Color backgroundColorGUI;
+    public DrawModel model;
 
-    //Minimal size of the window
-    public int MIN_WINDOW_WIDTH;
-    public int MIN_WINDOW_HEIGHT;
+    private DrawGUI _gui = this;
+    private Draw _app; // A reference to the application, to send commands to.
+    private BackgroundManager _backgroundManager;
 
-    public BufferedImage buffer;
-    public JPanel drawingArea;
-    private JPanel menu;
-    private JPanel menuAreaTop;
-    private JPanel menuAreaLower;
-    private Container containerPane;
-    public Color colorBackground;
+    //Swing objects
+    private JPanel _drawingArea;
+    private JPanel _topMenu;
+    private JPanel _topMenuTop;
+    private JPanel _topMenuBottom;
 
-    // Buttons
-    private JButton clear;
-    private JButton quit;
-    private JButton auto;
-    private JButton saveAuto;
-    private JButton loadAuto;
+    //Drop-down Selectors
+    private JComboBox<String> _shape_chooser;
+    private JComboBox<String> _color_chooser;
+    private JComboBox<String> _background_chooser;
 
-    // selector for drawing modes
-    private Choice shape_chooser;
-
-    // selector for drawing colors
-    private Choice color_chooser;
-
-    // selector for background colors
-    public Choice background_chooser;
+    //Buttons
+    private JButton _clear;
+    private JButton _quit;
+    private JButton _draw;
+    private JButton _undo;
+    private JButton _redo;
+    private Container _content;
+    public JButton save;
+    public JFileChooser filesave;
+    public JFileChooser textSaveFileChooser;
+    public JFileChooser textLoadFileChooser;
+    public JButton textSaveButton;
+    public JButton textLoadButton;
 
     /**
-     *
-     *The GUI constructor does all the work of creating the GUI and setting
-     *up event listeners.  Note the use of local and anonymous classes.
-     * @param application reference
+     * The GUI constructor does all the work of creating the GUI and setting up
+     * event listeners. Note the use of local and anonymous classes.
+     * @param itsApplication reference
+     * @param itsModel reference
      */
 
-    public DrawGUI(Draw application)
+    @SuppressWarnings("unused")
+    public DrawGUI(Draw itsApplication, DrawModel itsModel)
     {
-        super("Draw"); // Create the window
-
-        MIN_WINDOW_WIDTH = 600;
-        MIN_WINDOW_HEIGHT = 400;
-
-        app = application; // Remember the application reference
+        _app = itsApplication; // Remember the application reference
         color = Color.black; // the current drawing color
-        colorBackground = Color.white; // the current background color
+        model = itsModel;
 
-        drawingArea = new DrawingPanel(gui); // separate drawable area
-        menu = new JPanel();
-        menuAreaTop = new JPanel();
-        menuAreaLower = new JPanel();
+        // Create Swing Objects
+        setSwingObjects();
 
-        containerPane = new Container();
-        color_chooser = new Choice(); // selector for drawing colors
-        shape_chooser = new Choice(); // selector for drawing modes
-        background_chooser = new Choice(); // selector for background colors
+        // Create Layout
+        setLayout();
 
-        //Create buttons
-        clear = new JButton("Clear");
-        quit = new JButton("Quit");
-        auto = new JButton("Auto");
-        saveAuto = new JButton("SaveAuto");
-        loadAuto = new JButton("LoadAuto");
+        //add Listeners to Objects
+        addListeners();
 
-        addShapesToSelector(); // add shapes to drop down shapes
+        // Finally, set the size of the window, and pop it up
+        setWindowAndPop();
 
-        addColorsToDrawingSelector(); // add drawing colors to selector
+        // Initialize the buffered image with dimensions of the drawing area
+        model.initilizeBufferedImage(this._drawingArea.getWidth(),
+                this._drawingArea.getHeight());
+        backgroundColorGUI = _drawingArea.getBackground();
 
-        addColorsToBackgroundSelector(); // add background colors to selector
+        CommandBackgroundColor cmd = new CommandBackgroundColor(this,
+                _drawingArea.getBackground(), model);
+        this.addComponentListener(new WindowListner(this));
 
-        connectButtonsToApp(); // define action listener adapters that connect the  buttons to the app
+    }
 
-        setLayout(); // set a LayoutManager, and add the choosers and buttons to the window. 
+    private void setWindowAndPop()
+    {
+        this.setTitle("Draw Aufgabe 1.4-1.5");
+        this.setSize(700, 400);
+        this.setLocationRelativeTo(null);
+        this.setBackground(Color.white);
+        this.setMinimumSize(new Dimension(700, 300));
+        this.setVisible(true);
 
-        setWindowAndPopUp(); // finally, set the size of the window, and pop it up
+    }
 
-        initializeBuffer();
+    private void setLayout()
+    {
+        _content = this.getContentPane();
 
-        // Handle the window close request 
+        _drawingArea = new DrawingPanel(model, this);
+        _drawingArea.setBackground(Color.WHITE);
+        _topMenu = new JPanel();
+        _topMenu.setLayout(new GridLayout(2, 2));
+
+        _content.add(_topMenu, BorderLayout.NORTH);
+        _content.add(_drawingArea, BorderLayout.CENTER);
+
+        _topMenuTop = new JPanel();
+        _topMenuBottom = new JPanel();
+
+        _topMenu.add(_topMenuTop);
+        _topMenu.add(_topMenuBottom);
+
+        _topMenuTop.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        _topMenuBottom.add(new JLabel("Shape:"));
+        _topMenuBottom.add(_shape_chooser);
+        _topMenuBottom.add(new JLabel("Color:"));
+        _topMenuBottom.add(_color_chooser);
+        _topMenuBottom.add(_clear);
+        _topMenuBottom.add(_draw);
+        _topMenuBottom.add(_quit);
+
+        _topMenuBottom.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        _topMenuTop.add(new JLabel("BackgroundColor:"));
+        _topMenuTop.add(_background_chooser);
+        _topMenuTop.add(_undo);
+        _topMenuTop.add(_redo);
+        _topMenuTop.add(save);
+        _topMenuTop.add(textSaveButton);
+        _topMenuTop.add(textLoadButton);
+
+        this.setVisible(true);
+    }
+
+    private void setSwingObjects()
+    {
+        // Create selector for drawing modes
+        createShapeChooser();
+
+        // Create selector for drawing colors
+        createDrawingColorChooser();
+
+        // Create selector for background colors
+        createBackgroundColChooser();
+
+        // Create file chooser for save
+        createimageToSaveWindow();
+
+        createTextToSaveWindow();
+
+        // Create buttons
+        createJButtons();
+    }
+
+    private void createBackgroundColChooser()
+    {
+        _background_chooser = new JComboBox<String>();
+        _background_chooser.addItem("White");
+        _background_chooser.addItem("Black");
+        _background_chooser.addItem("Green");
+        _background_chooser.addItem("Blue");
+        _background_chooser.addItem("Orange");
+        _background_chooser.addItem("Yellow");
+    }
+
+    private void createimageToSaveWindow()
+    {
+        filesave = new JFileChooser();
+        filesave.setCurrentDirectory(null);
+        filesave.setDialogTitle("Save image as bmp file");
+        filesave.setVisible(true);
+    }
+
+    private void createTextToSaveWindow()
+    {
+        textSaveFileChooser = new JFileChooser();
+        textSaveFileChooser.setCurrentDirectory(null);
+        textSaveFileChooser.setDialogTitle("Save Data");
+        textSaveFileChooser.setVisible(true);
+
+        textLoadFileChooser = new JFileChooser();
+        textLoadFileChooser.setCurrentDirectory(null);
+        textLoadFileChooser.setDialogTitle("Load Data");
+        textLoadFileChooser.setVisible(true);
+    }
+
+    private void createShapeChooser()
+    {
+        _shape_chooser = new JComboBox<String>();
+        _shape_chooser.addItem("Scribble");
+        _shape_chooser.addItem("Rectangle");
+        _shape_chooser.addItem("Oval");
+        _shape_chooser.addItem("Triangle");
+        _shape_chooser.addItem("Line");
+        _shape_chooser.addItem("FilledRectangle");
+
+    }
+
+    private void createDrawingColorChooser()
+    {
+        _color_chooser = new JComboBox<String>();
+        _color_chooser.addItem("Black");
+        _color_chooser.addItem("Green");
+        _color_chooser.addItem("Red");
+        _color_chooser.addItem("Blue");
+        _color_chooser.addItem("Orange");
+        _color_chooser.addItem("White");
+        _color_chooser.addItem("Yellow");
+    }
+
+    private void createJButtons()
+    {
+        _clear = new JButton("Clear");
+        _quit = new JButton("Quit");
+        _draw = new JButton("Draw");
+        _undo = new JButton("Undo");
+        _redo = new JButton("Redo");
+        save = new JButton("Save");
+        textLoadButton = new JButton("Load cmds");
+        textSaveButton = new JButton("Save cmds");
+    }
+
+    private void addListeners()
+    {
+        _clear.addActionListener(new DrawActionListener("clear", this));
+        _quit.addActionListener(new DrawActionListener("quit", this));
+        _draw.addActionListener(new DrawActionListener("draw", this));
+        _undo.addActionListener(new DrawActionListener("undo", this));
+        _redo.addActionListener(new DrawActionListener("redo", this));
+
+        save.addActionListener(new FileChoserActionListner(_app, model, this));
+        textSaveButton.addActionListener(new TextSave(model, this));
+        textLoadButton.addActionListener(new TextSave(model, this));
+
+        _shape_chooser.addItemListener(new ShapeManager(this));
+
+        _color_chooser.addItemListener(new ColorItemListener(this));
+        _backgroundManager = new BackgroundManager(this);
+        _background_chooser.addItemListener(_backgroundManager);
+
+        // Handle the window close request similarly
         this.addWindowListener(new WindowAdapter()
         {
             public void windowClosing(WindowEvent e)
             {
-                gui.doCommand("quit");
+                _gui.doCommand("quit");
             }
         });
     }
 
+    public void undo()
+    {
+        model.undo();
+        model.drawBufferToGraphics(this._drawingArea.getGraphics());
+    }
+
+    public void redo()
+    {
+        model.redo();
+        model.drawBufferToGraphics(this._drawingArea.getGraphics());
+    }
+
+    public void selectColorBackground(Color color)
+    {
+        String s = model.hashkeyColor(color);
+        _background_chooser.removeItemListener(_backgroundManager);
+        _background_chooser.setSelectedItem(s);
+        _background_chooser.addItemListener(_backgroundManager);
+
+    }
+
     /**
-     * This is the application method that processes commands sent by the GUI 
-     * @param command to be executed
+     * Draw buffered image onto the drawing area
+     */
+    public void bufferToDrawingArea()
+    {
+        Graphics t = this._drawingArea.getGraphics();
+        model.drawBufferToGraphics(t);
+    }
+
+    /**
+     * Draw input specified buffer onto drawing area
+     * @param bufferToDraw buffer to be drawn onto drawing area
      */
 
+    public void specBufferToDrawingArea(BufferedImage bufferToDraw)
+    {
+        Graphics g = this._drawingArea.getGraphics();
+        g.drawImage(bufferToDraw, 0, 0, null);
+    }
+
+    public void redraw()
+    {
+        model.redraw();
+        model.drawBufferToGraphics(this._drawingArea.getGraphics());
+    }
+
+    /**
+     * Function previously included in the Draw class 
+     * @param command command passed
+     */
+    @SuppressWarnings("unused")
     public void doCommand(String command)
     {
         if (command.equals("clear"))
         {
             // clear the GUI window
-            // It would be more modular to include this functionality in the GUI
-            // class itself.  But for demonstration purposes, we do it here.
-            gui.initializeBuffer();
-            gui.draw();
+            CommandClear cmd = new CommandClear(model, this);
         }
         else if (command.equals("quit"))
-        { // quit the application
-            gui.dispose(); // close the GUI
+        {
+            this.dispose(); // close the GUI
             System.exit(0); // and exit.
         }
-        else if (command.equals("auto"))
+        else if (command.equals("draw"))
         {
-            app.autoDraw();
+            _app.autoDraw();
+            Graphics t = this._drawingArea.getGraphics();
+            t.drawImage(model.getBufferedImage(), 0, 0, null);
         }
-        else if (command.equals("saveAuto"))
+        else if (command.equals("redraw"))
         {
-            try
-            {
-                app.writeImage(app.getDrawing(), "test");
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
+            this.redraw();
         }
-        else if (command.equals("loadAuto"))
+        else if (command.equals("undo"))
         {
-            try
-            {
-                Image img = app.readImage("test.bmp");
-                int height = gui.drawingArea.getHeight();
-                int width = gui.drawingArea.getWidth();
-                if (img.getWidth(null) > gui.drawingArea.getWidth())
-                {
-
-                    int deltaW = Math
-                        .abs(img.getWidth(null) - gui.drawingArea.getWidth());
-                    app.setWidth(width + deltaW);
-                }
-                if (img.getHeight(null) > gui.drawingArea.getHeight())
-                {
-                    int deltaH = Math
-                        .abs(img.getHeight(null) - gui.drawingArea.getHeight());
-                    app.setHeight(height + deltaH);
-                }
-
-                BufferedImage tmp = new BufferedImage(img.getWidth(null),
-                        img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-                Graphics g = tmp.getGraphics();
-                g.drawImage(img, 0, 0, null);
-                g.dispose();
-
-                img = makeColorTransparent(tmp, app.savedBackgroungColor);
-                Graphics t = buffer.getGraphics();
-                t.drawImage(img, 0, 0, null);
-                t.dispose();
-
-                gui.draw();
-
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
+            this.undo();
+        }
+        else if (command.equals("redo"))
+        {
+            this.redo();
         }
     }
 
     /**
-     * Set the size of the window, and pop it up
+     * Getter for the drawing area
+     * @return reference to the drawing area
      */
-    private void setWindowAndPopUp()
+    public JPanel getDrawingArea()
     {
-        this.setSize(800, 600);
-        this.setMinimumSize(new Dimension(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT));
-        this.setVisible(true);
+        return this._drawingArea;
     }
-
-    /**
-     * Set a LayoutManager, and add the choosers and buttons to the window.
-     */
-    private void setLayout()
-    {
-        containerPane.setLayout(new BorderLayout());
-        menu.setLayout(new GridLayout(3, 0));
-        Border blackline = BorderFactory.createLineBorder(Color.black);
-        menu.setBorder(blackline);
-        menuAreaTop.setLayout(new GridLayout());
-        menuAreaLower.setLayout(new GridLayout(2, 3));
-        menu.add(menuAreaTop);
-        menu.add(menuAreaLower);
-        menuAreaLower.add(new JLabel("Shape:"));
-        menuAreaLower.add(new JLabel("Color:"));
-        menuAreaLower.add(new JLabel("Background:"));
-        menuAreaLower.add(shape_chooser);
-        menuAreaLower.add(color_chooser);
-        menuAreaLower.add(background_chooser);
-        menuAreaTop.add(clear);
-        menuAreaTop.add(quit);
-        menuAreaTop.add(auto);
-        menuAreaTop.add(saveAuto);
-        menuAreaTop.add(loadAuto);
-        containerPane.add(menu, BorderLayout.NORTH);
-        containerPane.add(drawingArea, BorderLayout.CENTER);
-        gui.add(containerPane);
-    }
-
-    /**
-     * Add shapes to drop down shapes
-     */
-
-    private void addShapesToSelector()
-    {
-        shape_chooser.add("Scribble");
-        shape_chooser.add("Rectangle");
-        shape_chooser.add("Oval");
-    }
-
-    /**
-     * Define action listener adapters that connect the  buttons to the app
-     */
-
-    private void connectButtonsToApp()
-    {
-        clear.addActionListener(new DrawActionListener("clear", this));
-        quit.addActionListener(new DrawActionListener("quit", this));
-        auto.addActionListener(new DrawActionListener("auto", this));
-        saveAuto.addActionListener(new DrawActionListener("saveAuto", this));
-        loadAuto.addActionListener(new DrawActionListener("loadAuto", this));
-        shape_chooser.addItemListener(new ShapeManager(this));
-        color_chooser.addItemListener(new ColorItemListener(this));
-        background_chooser.addItemListener(new BackgroundColorListener(this));
-    }
-
-    /**
-     * Add drawing colors to selector
-     */
-
-    private void addColorsToDrawingSelector()
-    {
-        color_chooser.add("Black");
-        color_chooser.add("White");
-        color_chooser.add("Green");
-        color_chooser.add("Red");
-        color_chooser.add("Blue");
-    }
-
-    /**
-     * Add background colors to selector
-     */
-
-    private void addColorsToBackgroundSelector()
-    {
-        background_chooser.add("White");
-        background_chooser.add("Black");
-        background_chooser.add("Green");
-        background_chooser.add("Red");
-        background_chooser.add("Blue");
-    }
-
-    /**
-     * Draw buffer onto a drawing area 
-     */
-    public void draw()
-    {
-        Graphics g = gui.drawingArea.getGraphics();
-        g.drawImage(gui.buffer, 0, 0, gui.colorBackground, null);
-    }
-
-    /**
-     * Initialize buffer to be drawn onto
-     */
-
-    public void initializeBuffer()
-    {
-        buffer = new BufferedImage(gui.drawingArea.getWidth(),
-                gui.drawingArea.getHeight(), BufferedImage.TYPE_INT_ARGB);
-    }
-
-    /**
-     * 
-     * Set a color transparent by editing its alpha channel
-     * @param img image which one of colors needs to be transparent
-     * @param color color to be set to be transparent
-     * @return image with the chosen color set as transparent
-     * @require img != null
-     * @require color != null
-     * @ensure imgToReturn != null
-     * 
-     */
-    public Image makeColorTransparent(BufferedImage img, Color color)
-    {
-        Image imgToReturn = null;
-        ImageFilter filter = new RGBImageFilter()
-        {
-            public int markerRGB = color.getRGB();
-
-            public int filterRGB(final int x, final int y, final int rgb)
-            {
-                if ((rgb | 0xFF000000) == markerRGB)
-                {
-                    // Mark the alpha bits as zero - transparent
-                    return 0x00FFFFFF & rgb;
-                }
-                else
-                {
-                    // nothing to do
-                    return rgb;
-                }
-            }
-        };
-
-        ImageProducer ip = new FilteredImageSource(img.getSource(), filter);
-        imgToReturn = Toolkit.getDefaultToolkit()
-            .createImage(ip);
-        return imgToReturn;
-    }
-
-    /**
-     * Convert Image to BufferedImage
-     * @param img image to be converted to buffer
-     * @return buffered image
-     */
-
-    public BufferedImage convertToBuffered(Image img)
-    {
-        BufferedImage tmp = new BufferedImage(img.getWidth(null),
-                img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-        Graphics g = tmp.getGraphics();
-        g.drawImage(img, 0, 0, null);
-        g.dispose();
-        return tmp;
-    }
-
 }

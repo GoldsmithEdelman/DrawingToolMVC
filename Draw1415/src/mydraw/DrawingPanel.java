@@ -8,32 +8,24 @@ import javax.swing.JPanel;
 @SuppressWarnings("serial")
 public class DrawingPanel extends JPanel
 {
-    DrawGUI gui;
-    BufferedImage tmp;
+    private DrawModel _drawingPanelModel;
 
-    public DrawingPanel(DrawGUI gui2)
+    /**
+     * Constructor
+     * @param itsModel Model reference
+     * @param itsGUI GUI reference
+     */
+    public DrawingPanel(DrawModel itsModel, DrawGUI itsGUI)
     {
-        gui = gui2;
+        _drawingPanelModel = itsModel;
     }
 
     @Override
-    public void paintComponent(Graphics g)
+    protected void paintComponent(final Graphics g)
     {
         super.paintComponent(g);
-        if (gui.getWidth() > gui.buffer.getWidth()
-                || gui.getHeight() > gui.buffer.getHeight())
-        {
-            tmp = new BufferedImage(gui.drawingArea.getWidth(),
-                    gui.drawingArea.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics t = tmp.getGraphics();
-            t.drawImage(gui.buffer, 0, 0, null);
-            g.drawImage(tmp, 0, 0, gui.colorBackground, null);
-            gui.buffer = tmp;
-        }
-        else
-        {
-            g.drawImage(gui.buffer, 0, 0, gui.colorBackground, null);
-        }
+        BufferedImage bild = _drawingPanelModel.getBufferedImage();
+        g.drawImage(bild, 0, 0, null);
 
     }
 }

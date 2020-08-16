@@ -1,29 +1,30 @@
 package mydraw;
 
+/**
+ * Here's a the class used for action listeners for the buttons 
+ */
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Here's a local class used for action listeners for the buttons
- * @author Michael
- *
- */
-
-public class DrawActionListener implements ActionListener
+class DrawActionListener implements ActionListener
 {
+    private DrawGUI _drawActionListenerGUI;
+    private String _drawActionListenerCommand;
 
-    private String command;
-    private DrawGUI gui;
-
-    public DrawActionListener(String cmd, DrawGUI drawGUI)
+    /**
+     * Constructor
+     * @param itsCommand Command reference 
+     * @param itsGUI GUI reference
+     */
+    public DrawActionListener(String itsCommand, DrawGUI itsGUI)
     {
-        command = cmd;
-        gui = drawGUI;
+        _drawActionListenerCommand = itsCommand;
+        _drawActionListenerGUI = itsGUI;
     }
 
     public void actionPerformed(ActionEvent e)
     {
-        gui.doCommand(command);
+        _drawActionListenerGUI.doCommand(_drawActionListenerCommand);
     }
-
 }

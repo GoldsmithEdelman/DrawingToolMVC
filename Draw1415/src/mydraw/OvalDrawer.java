@@ -3,23 +3,29 @@ package mydraw;
 import java.awt.Graphics;
 
 /**
- * If this class is active, ovals are drawn
+ * If this class is active an oval is drawn
  */
 
 class OvalDrawer extends RectangleDrawer
 {
-    public OvalDrawer(DrawGUI gui2)
+    /**
+     * Constructor
+     * @param itsGUI
+     */
+    OvalDrawer(DrawGUI itsGUI)
     {
-        super(gui2);
+        super(itsGUI);
     }
 
     public void doDraw(int x0, int y0, int x1, int y1, Graphics g)
     {
-        int x = Math.min(x0, x1);
-        int y = Math.min(y0, y1);
-        int w = Math.abs(x1 - x0);
-        int h = Math.abs(y1 - y0);
-        // draw oval instead of rectangle
-        g.drawOval(x, y, w, h);
+        getRDGUI().model.doDraw2(x0, y0, x1, y1, g);
+    }
+
+    public void saveCommand(int x0, int y0, int x1, int y1, Graphics g)
+    {
+        @SuppressWarnings("unused")
+        Drawable cmd = new CommandOval(getRDGUI(), getRDGUI().color,
+                getRDGUI().model, x0, y0, x1, y1);
     }
 }

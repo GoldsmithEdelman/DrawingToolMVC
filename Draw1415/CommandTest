@@ -1,0 +1,13 @@
+bacCol+Weiss
+clear
+bacCol+Schwarz
+rectangle+Weiss+0+0+150+150
+rectangle+Rot+140+140+240+240
+rectangle+Blau+10+10+200+200
+oval+Gruen+140+140+240+240
+rectangle+Blau+100+100+150+150
+oval+Blau+100+100+150+150
+scrLines+Blau+300+300+400+300+300+200+400+200+300+300+300+200+350+150+400+200+400+300
+rectangleFill+Blau+120+150+100+130
+line+Blau+0+0+200+250
+triangle+Blau+0+0+200+150+200+250

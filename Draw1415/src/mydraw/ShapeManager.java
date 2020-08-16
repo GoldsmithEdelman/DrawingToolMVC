@@ -2,66 +2,82 @@ package mydraw;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Hashtable;
 
 /**
- * This class determines how mouse events are to be interpreted depending on the shape more
- * currently set 
+ * This class determines how mouse events are to be interpreted,
+ * depending on the shape mode currently set 
+ * @param itsGUI User-interface reference
  */
 
-public class ShapeManager implements ItemListener
+class ShapeManager implements ItemListener
 {
-    private DrawGUI gui;
-    ScribbleDrawer scribbleDrawer;
-    ShapeDrawer currentDrawer;
-    RectangleDrawer rectDrawer;
-    OvalDrawer ovalDrawer;
+    private DrawGUI _shapeManagerGUI;
+    private Hashtable<String, ShapeDrawer> _shape;
+    private ScribbleDrawer _scribbleDrawer;
+    private RectangleDrawer _rectDrawer;
+    private OvalDrawer _ovalDrawer;
+    private ShapeDrawer _currentDrawer;
+    private TriangleDrawer _triangleDrawer;
+    private FillRecDrawer _filledRectangleDrawer;
+    private LineDrawer _lineDrawer;
 
-    public ShapeManager(DrawGUI itsGui)
+    /**
+     * Constructor
+     * @param itsGUI
+     */
+    public ShapeManager(DrawGUI itsGUI)
     {
-
-        gui = itsGui;
-        scribbleDrawer = new ScribbleDrawer(gui);
-        rectDrawer = new RectangleDrawer(gui);
-        ovalDrawer = new OvalDrawer(gui);
-
+        _shapeManagerGUI = itsGUI;
+        _scribbleDrawer = new ScribbleDrawer(_shapeManagerGUI);
+        _rectDrawer = new RectangleDrawer(_shapeManagerGUI);
+        _ovalDrawer = new OvalDrawer(_shapeManagerGUI);
+        _triangleDrawer = new TriangleDrawer(_shapeManagerGUI);
+        _filledRectangleDrawer = new FillRecDrawer(_shapeManagerGUI);
+        _lineDrawer = new LineDrawer(_shapeManagerGUI);
         // default: scribble mode
-        currentDrawer = scribbleDrawer;
+        _currentDrawer = _scribbleDrawer;
         // activate scribble drawer
-        gui.drawingArea.addMouseListener(currentDrawer);
-        gui.drawingArea.addMouseMotionListener(currentDrawer);
+        _shapeManagerGUI.getDrawingArea()
+            .addMouseListener(_currentDrawer);
+        _shapeManagerGUI.getDrawingArea()
+            .addMouseMotionListener(_currentDrawer);
+        shapesHashTable();
     }
 
-    // reset the shape drawer
+    private void shapesHashTable()
+    {
+        _shape = new Hashtable<String, ShapeDrawer>();
+        _shape.put("Scribble", _scribbleDrawer);
+        _shape.put("Rectangle", _rectDrawer);
+        _shape.put("Oval", _ovalDrawer);
+        _shape.put("Triangle", _triangleDrawer);
+        _shape.put("FilledRectangle", _filledRectangleDrawer);
+        _shape.put("Line", _lineDrawer);
+    }
+
     public void setCurrentDrawer(ShapeDrawer l)
     {
-        if (currentDrawer == l) return;
+        if (_currentDrawer == l) return;
 
         // deactivate previous drawer
-        gui.drawingArea.removeMouseListener(currentDrawer);
-        gui.drawingArea.removeMouseMotionListener(currentDrawer);
+        _shapeManagerGUI.getDrawingArea()
+            .removeMouseListener(_currentDrawer);
+        _shapeManagerGUI.getDrawingArea()
+            .removeMouseMotionListener(_currentDrawer);
+
         // activate new drawer
-        currentDrawer = l;
-        gui.drawingArea.addMouseListener(currentDrawer);
-        gui.drawingArea.addMouseMotionListener(currentDrawer);
+        _currentDrawer = l;
+        _shapeManagerGUI.getDrawingArea()
+            .addMouseListener(_currentDrawer);
+        _shapeManagerGUI.getDrawingArea()
+            .addMouseMotionListener(_currentDrawer);
     }
 
     // user selected new shape => reset the shape mode
     public void itemStateChanged(ItemEvent e)
     {
-        if (e.getItem()
-            .equals("Scribble"))
-        {
-            setCurrentDrawer(scribbleDrawer);
-        }
-        else if (e.getItem()
-            .equals("Rectangle"))
-        {
-            setCurrentDrawer(rectDrawer);
-        }
-        else if (e.getItem()
-            .equals("Oval"))
-        {
-            setCurrentDrawer(ovalDrawer);
-        }
+        setCurrentDrawer(_shape.get(e.getItem()));
+
     }
 }

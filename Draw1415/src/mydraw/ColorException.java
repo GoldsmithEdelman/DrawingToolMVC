@@ -1,24 +1,25 @@
 package mydraw;
 
-/**
- * Handling color exceptions
- * @author Michael
- *
- */
+import static org.junit.Assert.fail;
 
-@SuppressWarnings("serial")
+@SuppressWarnings({"serial", "unused"})
 public class ColorException extends Exception
 {
-    private String color;
+    /**
+     * Default constructor
+     */
+    public ColorException()
+    {
+        super("Color is not available");
+    }
 
+    /**
+     * Constructor with the parameter color as string-type
+     * @param color Color that triggers exception
+     */
     public ColorException(String color)
     {
-        this.color = color;
-    }
+        super("Chosen color " + color + " is not available");
 
-    public String toString()
-    {
-        return "Chosen color is not available: " + color;
     }
-
 }
